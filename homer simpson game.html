@@ -1,0 +1,246 @@
+<!doctype html>
+<html>
+<head>
+	<title?Javascript page template</title>
+</head>
+<body>
+	<h1 style = "colour:black;">
+		<center>Simpson Game</center>
+	</h1>
+<form id="testForm" target = "_self">
+	<select name="homer" id="homersimpson" onchange= "background1(this.value)">
+		<option id = "button1" value="">Select a location</option>
+		<option value="https://static.wikia.nocookie.net/simpsons/images/9/96/800px-Moe%27s_Tavern.png/revision/latest?cb=20170101230904">Moe's Tavern</option>
+		<option value="https://cdn.mos.cms.futurecdn.net/CFubit7V5muExqJPkbjRwg-1200-80.jpg.webp">Homer's Home</option>
+		<option value="https://static1.srcdn.com/wordpress/wp-content/uploads/2020/06/Krusty-Burger.jpg?q=50&fit=crop&w=1500&dpr=1.5">Krusty's Burger</option>
+	</select>
+	<br>
+	<select name="homer2" id="colours">
+		<option id = "button2" value = "">Select a ball colour</option>
+		<option value = "black">Black</option>
+		<option value ="blue">Blue</option>
+		<option value ="red">Red</option>
+		<option value ="yellow">Yellow</option>
+		<option value ="green">Green</option>
+	</select>
+	<br>
+	<input type = "button" onclick = "foregroundremover (this); Homergame(this); drawScore(this)"  value = "Ready to play" </input>
+
+
+</form>
+	<canvas id = "myCanvas" width= "1400" height = "600">
+	</canvas>
+	<script src = "homer.js"></script>
+	<script src = "balls.js"></script>
+	<script src = "flandersclass.js"></script>
+	<script>
+		var c = document.getElementById("myCanvas")
+		var ctx = c.getContext("2d")
+		
+		alert("Controls: ArrowKeys to move\nEsc to shoot\nSpace to end game\nEnjoy!")
+
+		// Main game function which essentially contains the animations and interaction of this game. Calling this function starts everything.
+		function Homergame(){
+			var score = 0
+			var health = 100
+			const myhomer = new homer(ctx,800,25)
+		
+			const myflanders = new flanders()
+			
+			// Just to clarify these are the balls that are shot from Homer and Ned respectively.
+			balls = []
+			balls_2 = []
+			
+			const keys = {
+					ArrowUp: {
+						pressed: false
+					},
+					ArrowDown: {
+						pressed: false
+					},
+					ArrowLeft: {
+						pressed: false
+					},
+					ArrowRight: {
+						pressed: false
+					},
+					space: {
+						pressed:false
+					}
+				}
+					
+
+
+					
+			// This function governs the animation of the game, particularly the animation of the balls (bullets) released from Homer and Ned.
+			function animate(){
+				requestAnimationFrame(animate)
+				ctx.clearRect(0,0,c.width,c.height)
+				myflanders.update()
+				myhomer.update()
+				drawScore()
+				drawHealth()
+				balls_2.forEach((balls,index) => {
+					
+					if (balls.position.x+20 >=c.width){
+						balls_2.splice(index,1)
+					}
+					
+					else if ((myhomer.x+120<=balls.position.x && balls.position.x<=myhomer.x+160) && (balls.position.y >=myhomer.y && balls.position.y <= myhomer.y+228)){
+						health-=10
+						balls_2.splice(index,1)
+					}
+					else{
+						balls.update()
+					}
+				})
+					
+				balls.forEach((ball,index) => {
+					if (ball.position.x +20 <=0){
+						balls.splice(index,1)
+					}
+					else if (myflanders.position.x+160<=ball.position.x  && ball.position.x<= myflanders.position.x+210 && myflanders.position.y+5<=ball.position.y && ball.position.y<=myflanders.position.y+165){
+						balls.splice(index,1)
+						score+=10
+					}
+					else {
+						ball.update()
+					}
+				})
+			}
+			requestAnimationFrame(homercontroller)
+			setInterval(flandersbullets,1000*1.6)
+			animate()
+			
+			
+			//As the name suggests this is where Homer's movement is controlled.
+		
+			function homercontroller(){
+				addEventListener("keydown",({key}) =>{
+					switch (key) {
+						case "ArrowUp":
+							if (myhomer.y<=0){
+								myhomer.y =0
+							}
+							else{
+								myhomer.y-=17
+							}
+							keys.ArrowUp.pressed = true
+							break
+						case "ArrowDown":
+							if (myhomer.y >= 380){
+								myhomer.y = 380
+							}
+							else{
+								myhomer.y+=17
+							}
+							myhomer.y+=17
+							keys.ArrowDown.pressed = true
+							break
+						case "ArrowLeft":
+							myhomer.x-=17
+							keys.ArrowLeft.pressed = true
+							break
+						case "ArrowRight":
+							if (myhomer.x >= 1150){
+								myhomer.x = 1150
+							}
+							else{
+								myhomer.x+=17
+							}
+							
+							keys.ArrowRight.pressed = true
+							break
+						case " ":
+							balls.push(
+								new bullets({
+									position:{
+										x:myhomer.x+90,
+										y:myhomer.y+178
+									},
+									velocity:{
+										x:-5,
+										y:0
+									}
+								},(document.getElementById("colours").value).toLowerCase())
+							)
+							break
+						case "Escape":
+							alert("GAME OVER YOU SCORED"+" "+score+" "+"POINT"+["S",""][score == 1 ? 1 : 0])
+							location.reload()
+							break
+					}
+				})
+					
+				addEventListener("keyup",({key}) =>{
+					switch (key) {
+						case "ArrowUp":
+							keys.ArrowUp.pressed = false
+							break
+						case "ArrowDown":
+							keys.ArrowDown.pressed = false
+							break
+						case "ArrowLeft":
+							keys.ArrowLeft.pressed = false
+							break
+						case "ArrowRight":
+							keys.ArrowRight.pressed = false
+							break
+					}
+				})
+
+			}
+			
+			function drawScore() {
+				ctx.font = "16px Arial";
+				ctx.fillStyle = "Red";
+				ctx.fillText("Score: "+score, 8,20);
+			}
+			
+			function drawHealth(){
+				ctx.font = "16px Arial";
+				ctx.fillStyle = "Blue";
+				ctx.fillText("Health: "+health, 8,35);
+				if (health == 0){
+					alert("GAME OVER YOU SCORED"+" "+score+" "+"POINT"+["S",""][score == 1 ? 1 : 0])
+					location.reload()
+				}
+			}
+
+			
+			function flandersbullets(){
+				balls_2.push(new bullets({
+					position:{
+						x:160+myflanders.position.x,
+						y:75+myflanders.position.y
+					},
+					velocity:{
+						x:5,
+						y:0
+					}
+				},"purple"))
+			}						
+
+		}
+		
+		
+		// Removes the forms and buttons from the background to make the game look more tidy
+		
+		function foregroundremover(x) {
+			x.style.display = "none"
+			homersimpson.style.display = "none"
+			colours.style.display = "none"
+		}
+	
+		
+		// This selects the background of the game based on user input.
+		function background1(x) {
+			document.body.style.backgroundImage = "url('"+x+"')"
+			document.body.style.backgroundSize = "cover"
+		}
+		
+	
+		
+	</script>
+</body>
+</html>
